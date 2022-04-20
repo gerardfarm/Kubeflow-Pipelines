@@ -6,10 +6,10 @@ sudo chmod 666 /var/run/docker.sock
 aws configure
 
 # To be defined
-# REPO_NAME = ''
-# AWS_REGION = ''
-# AWS_ACCOUNT_ID = ''
-# DOCKER_IMAGE_NAME = ''
+export REPO_NAME = ''
+export AWS_REGION = ''
+export AWS_ACCOUNT_ID = ''
+export DOCKER_IMAGE_NAME = ''
 
 # Create repo on aws ecr
 aws ecr create-repository --repository-name $REPO_NAME --region $AWS_REGION

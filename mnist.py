@@ -50,9 +50,6 @@ def unzip_func(bucket_name, zip_data_path_in_s3='mnist.zip',
 import kfp
 import boto3
 
-AWS_ACCESS_KEY_ID = 'AKIAXGFLDDSAOLDBHRMK'
-AWS_SECRET_ACCESS_KEY = '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'
-
 AWS_REGION='us-east-1'
 AWS_ACCOUNT_ID = boto3.client('sts').get_caller_identity().get('Account')
 

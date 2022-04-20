@@ -1,0 +1,132 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: testing-s3-in-pipeline-
+  annotations: {pipelines.kubeflow.org/kfp_sdk_version: 1.8.12, pipelines.kubeflow.org/pipeline_compilation_time: '2022-04-20T14:42:54.501171',
+    pipelines.kubeflow.org/pipeline_spec: '{"description": "dowload zip mnist data
+      and re-upload it on s3.", "inputs": [{"default": "ali-bucket-gerard", "name":
+      "BUCKET_NAME", "optional": true}], "name": "testing-s3-in-pipeline"}'}
+  labels: {pipelines.kubeflow.org/kfp_sdk_version: 1.8.12}
+spec:
+  entrypoint: testing-s3-in-pipeline
+  templates:
+  - name: testing-s3-in-pipeline
+    inputs:
+      parameters:
+      - {name: BUCKET_NAME}
+    dag:
+      tasks:
+      - name: unzip-func
+        template: unzip-func
+        arguments:
+          parameters:
+          - {name: BUCKET_NAME, value: '{{inputs.parameters.BUCKET_NAME}}'}
+  - name: unzip-func
+    container:
+      args: [--bucket-name, '{{inputs.parameters.BUCKET_NAME}}', --zip-data-path-in-s3,
+        mnist.zip, --unzip-data-path-in-s3, dest/, --downloaded-data-path-out, data/mnist.zip,
+        --unzip-downloaded-data-path, ./unzipped_data, --AWS-REGION, us-east-1]
+      command:
+      - sh
+      - -ec
+      - |
+        program_path=$(mktemp)
+        printf "%s" "$0" > "$program_path"
+        python3 -u "$program_path" "$@"
+      - "def unzip_func(bucket_name, zip_data_path_in_s3='mnist.zip',\n          \
+        \                  unzip_data_path_in_s3='dest/',\n                      \
+        \      downloaded_data_path_out='data/mnist.zip',\n                      \
+        \      unzip_downloaded_data_path='./unzipped_data',\n                   \
+        \         AWS_REGION='us-east-1'):\n    \"\"\" \n    Download zip data from\
+        \ s3, extract and then re-upload it to S3\n    Parameters:\n        - bucket_name\
+        \ : str, name of the bucket\n        - zip_data_path_in_s3: str, complete\
+        \ path of zip data on S3\n        - unzip_data_path_in_s3: str, path where\
+        \ you want to extract your data on S3\n        - downloaded_data_path_out:\
+        \ str, path where data is downloaded on PC\n        - unzip_downloaded_data_path:\
+        \ str, path to extract data\n    \"\"\"\n\n    # It is mandotory to put necessary\
+        \ libraries here\n    import os\n    import boto3\n    import zipfile\n\n\
+        \    os.makedirs(\"data\", exist_ok=True)\n    os.makedirs(\"unzipped_data\"\
+        , exist_ok=True)\n\n    # Access S3\n    conn_s3 = boto3.client('s3', region_name=AWS_REGION)\n\
+        \    s3 = boto3.resource('s3', region_name=AWS_REGION)\n    my_bucket = s3.Bucket(bucket_name)\n\
+        \n    # Download data on your PC\n    obj = my_bucket.Object(zip_data_path_in_s3)\n\
+        \    obj.download_file(Filename=downloaded_data_path_out)\n\n    # Unzip downloaded\
+        \ data\n    with zipfile.ZipFile(downloaded_data_path_out, 'r') as file:\n\
+        \        file.extractall(unzip_downloaded_data_path)\n\n    # Upload unzipped\
+        \ data to your S3 Storage Bucket\n    for file in os.listdir(unzip_downloaded_data_path):\n\
+        \        output_path = unzip_data_path_in_s3 + file\n        conn_s3.upload_file(os.path.join(unzip_downloaded_data_path,\
+        \ file), bucket_name, output_path)\n\nimport argparse\n_parser = argparse.ArgumentParser(prog='Unzip\
+        \ func', description='Download zip data from s3, extract and then re-upload\
+        \ it to S3')\n_parser.add_argument(\"--bucket-name\", dest=\"bucket_name\"\
+        , type=str, required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"\
+        --zip-data-path-in-s3\", dest=\"zip_data_path_in_s3\", type=str, required=False,\
+        \ default=argparse.SUPPRESS)\n_parser.add_argument(\"--unzip-data-path-in-s3\"\
+        , dest=\"unzip_data_path_in_s3\", type=str, required=False, default=argparse.SUPPRESS)\n\
+        _parser.add_argument(\"--downloaded-data-path-out\", dest=\"downloaded_data_path_out\"\
+        , type=str, required=False, default=argparse.SUPPRESS)\n_parser.add_argument(\"\
+        --unzip-downloaded-data-path\", dest=\"unzip_downloaded_data_path\", type=str,\
+        \ required=False, default=argparse.SUPPRESS)\n_parser.add_argument(\"--AWS-REGION\"\
+        , dest=\"AWS_REGION\", type=str, required=False, default=argparse.SUPPRESS)\n\
+        _parsed_args = vars(_parser.parse_args())\n\n_outputs = unzip_func(**_parsed_args)\n"
+      image: 494280055936.dkr.ecr.us-east-1.amazonaws.com/hello-repository:latest
+    inputs:
+      parameters:
+      - {name: BUCKET_NAME}
+    metadata:
+      labels:
+        pipelines.kubeflow.org/kfp_sdk_version: 1.8.12
+        pipelines.kubeflow.org/pipeline-sdk-type: kfp
+        pipelines.kubeflow.org/enable_caching: "true"
+      annotations: {pipelines.kubeflow.org/component_spec: '{"description": "Download
+          zip data from s3, extract and then re-upload it to S3", "implementation":
+          {"container": {"args": ["--bucket-name", {"inputValue": "bucket_name"},
+          {"if": {"cond": {"isPresent": "zip_data_path_in_s3"}, "then": ["--zip-data-path-in-s3",
+          {"inputValue": "zip_data_path_in_s3"}]}}, {"if": {"cond": {"isPresent":
+          "unzip_data_path_in_s3"}, "then": ["--unzip-data-path-in-s3", {"inputValue":
+          "unzip_data_path_in_s3"}]}}, {"if": {"cond": {"isPresent": "downloaded_data_path_out"},
+          "then": ["--downloaded-data-path-out", {"inputValue": "downloaded_data_path_out"}]}},
+          {"if": {"cond": {"isPresent": "unzip_downloaded_data_path"}, "then": ["--unzip-downloaded-data-path",
+          {"inputValue": "unzip_downloaded_data_path"}]}}, {"if": {"cond": {"isPresent":
+          "AWS_REGION"}, "then": ["--AWS-REGION", {"inputValue": "AWS_REGION"}]}}],
+          "command": ["sh", "-ec", "program_path=$(mktemp)\nprintf \"%s\" \"$0\" >
+          \"$program_path\"\npython3 -u \"$program_path\" \"$@\"\n", "def unzip_func(bucket_name,
+          zip_data_path_in_s3=''mnist.zip'',\n                            unzip_data_path_in_s3=''dest/'',\n                            downloaded_data_path_out=''data/mnist.zip'',\n                            unzip_downloaded_data_path=''./unzipped_data'',\n                            AWS_REGION=''us-east-1''):\n    \"\"\"
+          \n    Download zip data from s3, extract and then re-upload it to S3\n    Parameters:\n        -
+          bucket_name : str, name of the bucket\n        - zip_data_path_in_s3: str,
+          complete path of zip data on S3\n        - unzip_data_path_in_s3: str, path
+          where you want to extract your data on S3\n        - downloaded_data_path_out:
+          str, path where data is downloaded on PC\n        - unzip_downloaded_data_path:
+          str, path to extract data\n    \"\"\"\n\n    # It is mandotory to put necessary
+          libraries here\n    import os\n    import boto3\n    import zipfile\n\n    os.makedirs(\"data\",
+          exist_ok=True)\n    os.makedirs(\"unzipped_data\", exist_ok=True)\n\n    #
+          Access S3\n    conn_s3 = boto3.client(''s3'', region_name=AWS_REGION)\n    s3
+          = boto3.resource(''s3'', region_name=AWS_REGION)\n    my_bucket = s3.Bucket(bucket_name)\n\n    #
+          Download data on your PC\n    obj = my_bucket.Object(zip_data_path_in_s3)\n    obj.download_file(Filename=downloaded_data_path_out)\n\n    #
+          Unzip downloaded data\n    with zipfile.ZipFile(downloaded_data_path_out,
+          ''r'') as file:\n        file.extractall(unzip_downloaded_data_path)\n\n    #
+          Upload unzipped data to your S3 Storage Bucket\n    for file in os.listdir(unzip_downloaded_data_path):\n        output_path
+          = unzip_data_path_in_s3 + file\n        conn_s3.upload_file(os.path.join(unzip_downloaded_data_path,
+          file), bucket_name, output_path)\n\nimport argparse\n_parser = argparse.ArgumentParser(prog=''Unzip
+          func'', description=''Download zip data from s3, extract and then re-upload
+          it to S3'')\n_parser.add_argument(\"--bucket-name\", dest=\"bucket_name\",
+          type=str, required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"--zip-data-path-in-s3\",
+          dest=\"zip_data_path_in_s3\", type=str, required=False, default=argparse.SUPPRESS)\n_parser.add_argument(\"--unzip-data-path-in-s3\",
+          dest=\"unzip_data_path_in_s3\", type=str, required=False, default=argparse.SUPPRESS)\n_parser.add_argument(\"--downloaded-data-path-out\",
+          dest=\"downloaded_data_path_out\", type=str, required=False, default=argparse.SUPPRESS)\n_parser.add_argument(\"--unzip-downloaded-data-path\",
+          dest=\"unzip_downloaded_data_path\", type=str, required=False, default=argparse.SUPPRESS)\n_parser.add_argument(\"--AWS-REGION\",
+          dest=\"AWS_REGION\", type=str, required=False, default=argparse.SUPPRESS)\n_parsed_args
+          = vars(_parser.parse_args())\n\n_outputs = unzip_func(**_parsed_args)\n"],
+          "image": "494280055936.dkr.ecr.us-east-1.amazonaws.com/hello-repository:latest"}},
+          "inputs": [{"name": "bucket_name"}, {"default": "mnist.zip", "name": "zip_data_path_in_s3",
+          "optional": true}, {"default": "dest/", "name": "unzip_data_path_in_s3",
+          "optional": true}, {"default": "data/mnist.zip", "name": "downloaded_data_path_out",
+          "optional": true}, {"default": "./unzipped_data", "name": "unzip_downloaded_data_path",
+          "optional": true}, {"default": "us-east-1", "name": "AWS_REGION", "optional":
+          true}], "name": "Unzip func"}', pipelines.kubeflow.org/component_ref: '{}',
+        pipelines.kubeflow.org/arguments.parameters: '{"AWS_REGION": "us-east-1",
+          "bucket_name": "{{inputs.parameters.BUCKET_NAME}}", "downloaded_data_path_out":
+          "data/mnist.zip", "unzip_data_path_in_s3": "dest/", "unzip_downloaded_data_path":
+          "./unzipped_data", "zip_data_path_in_s3": "mnist.zip"}'}
+  arguments:
+    parameters:
+    - {name: BUCKET_NAME, value: ali-bucket-gerard}
+  serviceAccountName: pipeline-runner

@@ -21,7 +21,7 @@ def ecr_login(region, Account_Id, verbose=True):
     return username, password, registry
 
 
-AWS_REGION='us-east-1'                                                                                 
+AWS_REGION='region-name'                                                                                 
 AWS_ACCOUNT_ID = boto3.client('sts').get_caller_identity().get('Account')
 
 

@@ -38,3 +38,11 @@ docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO_NAME
 # Now you can use your repo for pipelines
 
 # see https://aws.amazon.com/blogs/devops/how-to-use-docker-images-from-a-private-registry-in-aws-codebuild-for-your-build-environment/
+
+# To run docker
+sudo docker run -it --rm --name=test $DOCKER_IMAGE_NAME
+
+# To run docker with camera access
+sudo docker run -it --device=/dev/video0:/dev/video0 --rm --name=test $DOCKER_IMAGE_NAME
+# or
+sudo docker run -it --device=/dev/video0:/dev/video0 --rm --name=test $URI

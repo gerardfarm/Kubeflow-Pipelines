@@ -4,7 +4,7 @@ import boto3
 verbose = False
 
 # Set REGION for s3 bucket and elastic contaienr registry
-AWS_REGION='us-east-1'
+AWS_REGION='region-name'
 AWS_ACCOUNT_ID = boto3.client('sts').get_caller_identity().get('Account')
 
 # Access S3

@@ -55,11 +55,11 @@ def test_object_detection(msg, bucket_name, AWS_REGION):
 
 
 # Define registry
-AWS_REGION='us-east-1'
+AWS_REGION='region-name'
 AWS_ACCOUNT_ID = boto3.client('sts').get_caller_identity().get('Account')
 
 REPO_NAME = 'object-detection'
-BUCKET_NAME = 'ali-bucket-gerard'
+BUCKET_NAME = 'bucket-name'
 TAG_NAME = 'latest'
 DOCKER_REGISTRY = '{}.dkr.ecr.{}.amazonaws.com/{}:{}'.format(
                                                     AWS_ACCOUNT_ID, 
